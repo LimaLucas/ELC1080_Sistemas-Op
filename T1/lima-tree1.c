@@ -32,7 +32,7 @@ int main(){
 		if(id == 0){
 			printf("\n    >>> P4 = %i, meu pai é %i\n", getpid(), getppid());
 			wait(&status);
-			printf("\n    >>> P4 Morreu %i\n", getpid());
+			printf("\n    >>> P4 Morreu \n", getpid());
 			return 0;
 		
 		}else{
@@ -67,7 +67,7 @@ int main(){
 			if(id == 0){
 				printf("\n    >>> P6 = %i, meu pai é %i\n", getpid(), getppid());
 				wait(&status);
-				printf("\n    >>> 6 Morreu %i\n", getpid());
+				printf("\n    >>> P6 Morreu %i\n", getpid());
 				return 0;
 			}else{
 				id = fork();
@@ -76,7 +76,7 @@ int main(){
 
 				if(id == 0){
 					printf("\n    >>> P7 = %i, meu pai é %i\n", getpid(), getppid());
-					printf("\n    >>> 7 Morreu %i\n", getpid());
+					printf("\n    >>> P7 Morreu %i\n", getpid());
 					return 0;
 				return 0;
 				}else{
@@ -89,7 +89,7 @@ int main(){
 			printf("\n> P1 Morreu %i \n", getpid());
 
 			clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
-			printf("Tempo de execução: %lf \n", difTime(t0, t1));
+			printf("\nTempo de execução: %lf\n\n", difTime(t0, t1));
 			return 0;
 		}
 	}
