@@ -25,8 +25,13 @@ int main(int argc, char **argv){
 
 	if(argc == 0){
 		printf("Informe a quantidade de números!\n");
+		return -1;
+	}else if(atoi(argv[1]) < 0){
+		printf("Infome um número positivo!\n");
+		return -1;
 	}else if(argc > 1){
-		printf("Parametros inválidos!\n");
+		printf("Informe apenas um número!\n");
+		return -1;
 	}
 
 	int status;
