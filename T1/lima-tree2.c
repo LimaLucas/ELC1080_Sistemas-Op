@@ -13,48 +13,48 @@ int main(){
 	struct timespec t0, t1;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &t0);
 
-	int status;
+	int statu;s
 	pid_t id;
 
 	printf("\n> P1 = %i\n", getpid());
 
 	id = fork();
-	if(id == -1) return 1;
+	if(id == -1) return -1;
 	wait(&status);
 
 	if(id == 0){
 		printf("\n > P2 = %i, meu pai é %i\n", getpid(), getppid());
 
 		id = fork();
-		if(id == -1) return 1;
+		if(id == -1) return -1;
 		wait(&status);
 
 		if(id == 0){
 			printf("\n  > P3 = %i, meu pai é %i\n", getpid(), getppid());
 
 			id = fork();
-			if(id == -1) return 1;
+			if(id == -1) return -1;
 			wait(&status);
 
 			if(id == 0){
 				printf("\n   > P4 = %i, meu pai é %i\n", getpid(), getppid());
 
 				id = fork();
-				if(id == -1) return 1;
+				if(id == -1) return -1;
 				wait(&status);
 
 				if(id == 0){
 					printf("\n    > P5 = %i, meu pai é %i\n", getpid(), getppid());
 
 					id = fork();
-					if(id == -1) return 1;
+					if(id == -1) return -1;
 					wait(&status);
 
 					if(id == 0){
 						printf("\n     > P6 = %i, meu pai é %i\n", getpid(), getppid());
 
 						id = fork();
-						if(id == -1) return 1;
+						if(id == -1) return -1;
 						wait(&status);
 
 						if(id == 0){
