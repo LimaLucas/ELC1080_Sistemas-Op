@@ -29,7 +29,7 @@ int main(int argc, char **argv){
 	}else if(atoi(argv[1]) < 0){
 		printf("Infome um número positivo!\n");
 		return -1;
-	}else if(argc > 1){
+	}else if(argc > 2){
 		printf("Informe apenas um número!\n");
 		return -1;
 	}
@@ -37,20 +37,20 @@ int main(int argc, char **argv){
 	int status;
 	pid_t id;
 	
-	printf("\n> P1 = %i, criando filho\n", getpid());
+	printf("\n> P1 = %i, meu pai é %i\n  Criando filho...\n", getpid(), getppid());
 
 	id= fork();
 	if(id == -1) return 1;
 	wait(&status);
 
 	if(id == 0){
-		printf("\n > P2 = %i, Fibonacci: ", getpid());
+		printf("\n >> P2 = %i, meu pai é %i\n    Sequência Fibonacci: ", getpid(), getppid());
 		fibonacci(atoi(argv[1]));
 		printf("\n\n > P2 Morreu %i\n", getpid());
 		return 0;
 
 	}else{
-		printf("\n> P1 Morreu %i\n", getpid());
+		printf("\n> P1 Morreu %i\n\n", getpid());
 		return 0;
 	}
 }
