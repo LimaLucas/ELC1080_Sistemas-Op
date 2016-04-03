@@ -86,7 +86,7 @@ int main(){
 
 	}else{
 		printf("\n> P1 Morreu %i\n", getpid());
-		clock_gettime(CLOCK_MONOTONIC_RAW, &t0);
+		clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
 		printf("\nTempo de execução: %lf\n\n", difTime(t0, t1));
 		return 0;
 	}
