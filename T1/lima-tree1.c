@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+// #include <unistd.h>
 #include <sys/wait.h>
 #include <time.h>
 
@@ -13,84 +13,80 @@ int main(){
 	struct timespec t0, t1;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &t0);
 
-	int status;
-	pid_t id;
+	pid_t p2, p3, p4, p5, p6, p7;
 	
-	printf("\n> P1 = %i\n", getpid());
+	printf("> P1 = %i\n", getpid());
 
-	id = fork();
-	if(id == -1) return -1;
-	wait(&status);
-
-	if(id == 0){
-		printf("\n  >> P2 = %i, meu pai é %i\n", getpid(), getppid());
+	p2 = fork();
+	if(p2 == -1) return -1;
+	if(p2 == 0){
+		printf("  > P2 = %i, meu pai é %i\n", getpid(), getppid());
+		sleep(1);
 		
-		id = fork();
-		if(id == -1) return -1;
-		wait(&status);
-
-		if(id == 0){
-			printf("\n    >>> P4 = %i, meu pai é %i\n", getpid(), getppid());
-			wait(&status);
-			printf("\n    >>> P4 Morreu %i \n", getpid());
+		p4 = fork();
+		if(p4 == -1) return -1;
+		if(p4 == 0){
+			printf("    > P4 = %i, meu pai é %i\n", getpid(), getppid());
+			sleep(1);
+			printf("    > P4 Morreu %i \n", getpid());
 			return 0;
 		
 		}else{
-			id = fork();
-			if(id == -1) return -1;
-			wait(&status);
-			
-			if(id == 0){
-				printf("\n    >>> P5 = %i, meu pai é %i\n", getpid(), getppid());
-				wait(&status);
-				printf("\n    >>> P5 Morreu %i\n", getpid());
+			p5 = fork();
+			if(p5 == -1) return -1;
+			if(p5 == 0){
+				printf("    > P5 = %i, meu pai é %i\n", getpid(), getppid());
+				sleep(1);
+				printf("    > P5 Morreu %i\n", getpid());
 				return 0;
 			
 			}else{
-				printf("\n  >> P2 Morreu %i\n", getpid());
-				return 0;
+				wait(NULL);
 			}
+			wait(NULL);
 		}
+		printf("  > P2 Morreu %i\n", getpid());
+		return 0;
 		
 	}else{
-		id = fork();
-		if(id == -1) return -1;
-		wait(&status);
+		p3 = fork();
+		if(p3 == -1) return -1;
+		if(p3 == 0){
+			printf("  > P3 = %i, meu pai é %i\n", getpid(), getppid());
+			sleep(1);
 
-		if(id == 0){
-			printf("\n  >> P3 = %i, meu pai é %i\n", getpid(), getppid());
-			
-			id = fork();
-			if(id == -1) return -1;
-			wait(&status);
-
-			if(id == 0){
-				printf("\n    >>> P6 = %i, meu pai é %i\n", getpid(), getppid());
-				wait(&status);
-				printf("\n    >>> P6 Morreu %i\n", getpid());
+			p6 = fork();
+			if(p6 == -1) return -1;
+			if(p6 == 0){
+				printf("    > P6 = %i, meu pai é %i\n", getpid(), getppid());
+				sleep(1);
+				printf("    > P6 Morreu %i\n", getpid());
 				return 0;
 			}else{
-				id = fork();
-				if(id == -1)return -1;
-				wait(&status);
-
-				if(id == 0){
-					printf("\n    >>> P7 = %i, meu pai é %i\n", getpid(), getppid());
-					printf("\n    >>> P7 Morreu %i\n", getpid());
+				p7 = fork();
+				if(p7 == -1)return -1;
+				if(p7 == 0){
+					printf("    > P7 = %i, meu pai é %i\n", getpid(), getppid());
+					sleep(1);
+					printf("    > P7 Morreu %i\n", getpid());
 					return 0;
 				return 0;
 				}else{
-					printf("\n  >> P3 Morreu %i\n", getpid());
-					return 0;
+					wait(NULL);
 				}
+				wait(NULL);
 			}
+			printf("  > P3 Morreu %i\n", getpid());
+			return 0;
 
 		}else{
-			printf("\n> P1 Morreu %i \n", getpid());
-
-			clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
-			printf("\nTempo de execução: %lf\n\n", difTime(t0, t1));
-			return 0;
+			wait(NULL);
 		}
+		wait(NULL);
 	}
+	printf("> P1 Morreu %i \n", getpid());
+
+	clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
+	printf("\nTempo de execução: %lf seg.\n\n", difTime(t0, t1));
+	return 0;
 }
