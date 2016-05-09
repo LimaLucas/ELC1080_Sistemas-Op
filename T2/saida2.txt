@@ -5,11 +5,6 @@ Qtde de threads: 	2
 Thread	1 	1
 Thread	0 	0
 
-Tempo de criação das threads:	0.000152 seg.
-Tempo de junção das threads:	0.000605 seg.
-Tempo de execução:		0.000801 seg.
---------------------
-
-Tempo de criação das threads:	0.000152 seg.
-Tempo de junção das threads:	0.000605 seg.
-Tempo de execução:		0.000801 seg.
+Tempo de criação das threads:	0.000068 seg.
+Tempo de junção das threads:	0.000295 seg.
+Tempo de execução:		0.000382 seg.

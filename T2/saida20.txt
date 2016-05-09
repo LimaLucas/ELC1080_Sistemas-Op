@@ -2,32 +2,27 @@ Valor buscado: 	654321
 Qtde de threads: 	20
 
 	ID	Encontrou
-Thread	4 	0
 Thread	5 	0
+Thread	4 	0
 Thread	6 	0
 Thread	0 	0
+Thread	2 	0
 Thread	1 	0
 Thread	10 	0
-Thread	9 	0
-Thread	2 	0
+Thread	8 	0
 Thread	7 	0
 Thread	12 	0
 Thread	11 	0
 Thread	13 	1
-Thread	3 	0
-Thread	8 	0
-Thread	16 	0
-Thread	15 	0
 Thread	14 	0
-Thread	18 	0
-Thread	17 	0
+Thread	15 	0
 Thread	19 	0
+Thread	9 	0
+Thread	3 	0
+Thread	16 	0
+Thread	17 	0
+Thread	18 	0
 
-Tempo de criação das threads:	0.001045 seg.
-Tempo de junção das threads:	0.000872 seg.
-Tempo de execução:		0.001973 seg.
---------------------
-
-Tempo de criação das threads:	0.001045 seg.
-Tempo de junção das threads:	0.000872 seg.
-Tempo de execução:		0.001972 seg.
+Tempo de criação das threads:	0.000805 seg.
+Tempo de junção das threads:	0.000675 seg.
+Tempo de execução:		0.001517 seg.

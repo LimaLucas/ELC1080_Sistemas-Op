@@ -28,7 +28,7 @@ int main(int argc, char **argv){
 		return -1;
 	int i;
 
-	printf("Valor buscado: \t%i\nQtde de threads: \t%i\n\n\tID\tEncontrou\n", gX, gT);
+	printf("Valor buscado: \t%i\nQtde de threads: %i\n\n\tID\tEncontrou\n", gX, gT);
 
 	// CRIAÇÃO DAS THREADS
 	clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
