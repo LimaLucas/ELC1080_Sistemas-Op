@@ -13,7 +13,7 @@ int gT = 0;
 // Função da Thread
 void * funcThread(void * index);
 
-// Função que calcula a diferença entre um tempo inicial e um final
+// Função que calcula a diferença entre tempo inicial e final
 double difTime(struct timespec t0, struct timespec t1);
 
 // Função que verifica se os parâmetros de entrada estão corretos
@@ -21,8 +21,8 @@ int testInput(int argc, char **argv);
 
 int main(int argc, char **argv){
 	//INICIALIZAÇÃO
-	struct timespec tE0, tE1, tC0, tC1, tJ0, tJ1;
-	clock_gettime(CLOCK_MONOTONIC_RAW, &tE0); //Tempo inicial de execução
+	struct timespec t0, t1, t2, t3;
+	clock_gettime(CLOCK_MONOTONIC_RAW, &t0);
 
 	if(!testInput(argc, argv))
 		return -1;
@@ -31,51 +31,48 @@ int main(int argc, char **argv){
 	printf("Valor buscado: \t%i\nQtde de threads: \t%i\n\n\tID\tEncontrou\n", gX, gT);
 
 	// CRIAÇÃO DAS THREADS
-	clock_gettime(CLOCK_MONOTONIC_RAW, &tC0); //Tempo inicial da criação
+	clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
 	pthread_t lThread[gT]; // Cria lista de threads de tamanho gT informado por parâmetro
 
 	for(i=0; i<gT; i++){
 		pthread_create(&lThread[i], NULL, funcThread, (void *) i);
 	}
 
-	clock_gettime(CLOCK_MONOTONIC_RAW, &tC1); //Tempo final da criação
+	clock_gettime(CLOCK_MONOTONIC_RAW, &t2);
 
 	// JUNÇÃO DAS THREADS
-	clock_gettime(CLOCK_MONOTONIC_RAW, &tJ0); //Tempo inicial da junção
-
-	for(i=0; i<gT; i++){
+	for(i=0; i<gT; i++)
 		pthread_join(lThread[i], NULL);
-	}
 
-	clock_gettime(CLOCK_MONOTONIC_RAW, &tJ1); //Tempo final da junção
+	clock_gettime(CLOCK_MONOTONIC_RAW, &t3);
 	
 	// FINALIZAÇÃO
-	clock_gettime(CLOCK_MONOTONIC_RAW, &tE1); //Tempo final de execução
-	
-	printf("\nTempo de criação das threads:\t%lf seg.\n", difTime(tC0, tC1));
-	printf("Tempo de junção das threads:\t%lf seg.\n", difTime(tJ0, tJ1));
-	printf("Tempo de execução:\t%lf seg.\n", difTime(tE0, tE1));
+	printf("\nTempo de criação das threads:\t%lf seg.\n", difTime(t1, t2));
+	printf("Tempo de junção das threads:\t%lf seg.\n", difTime(t2, t3));
+	printf("Tempo de execução:\t\t%lf seg.\n", difTime(t0, t3));
 
 	return 0;
 }
 
 void * funcThread(void * index){
-	int i, flag = 0;
+	int i;
 	int id = (int) index;
 	int ini = (MAX/gT)*id;  // Especifica o inicio do periodo a ser verificado
-	int fin = ini+(MAX/gT); // Especifica o final
+	int fin = ini+(MAX/gT); // Especifica o final do periodo
 
-	for(i=ini; i<fin; i++)
-		if(gX==i)
-			flag = 1;
+	for(i=ini; i<fin; i++) // Percorre todo o periodo referente a uma thread
+		if(gX==i){
+			printf("Thread\t%i \t1\n", id);
+			pthread_exit(NULL);
+		}
 
-	if(id==gT-1 && gX == MAX) // Condição para que a última thread também verifique valor MAX
-		flag = 1;
-
-	if(flag == 1)
-		printf("Thread\t%i \t1\n", id);
-	else
+	if(id==gT-1 && gX == MAX){ // Condição para que a última thread também verifique o valor MAX
 		printf("Thread\t%i \t0\n", id);
+		pthread_exit(NULL);
+	}
+
+	printf("Thread\t%i \t0\n", id);
+	pthread_exit(NULL);
 }
 
 double difTime(struct timespec t0, struct timespec t1){
@@ -83,17 +80,17 @@ double difTime(struct timespec t0, struct timespec t1){
 }
 
 int testInput(int argc, char **argv){
-	if(argc<3){ // Verifica a entrada de 3 valores, alg. X e T
+	if(argc!=3){
 		printf("Informe o num. buscado e a qtde de threads!\n");
 		return 0;
 	}else{
 		gX = atoi(argv[1]);
 		gT = atoi(argv[2]);
 
-		if(gX<MIN || gX>MAX){ // Varifica de valor a ser buscado está dentro do periodo especificado
+		if(gX<MIN || gX>MAX){ 
 			printf("O valor buscado deve estar entre 0 e 1mi!\n");
 			return 0;
-		}else if(gT!=1 && gT!=2 && gT!=5 && gT!=10 && gT!=20){ // Verifica se a qtde de threads é valida
+		}else if(gT!=1 && gT!=2 && gT!=5 && gT!=10 && gT!=20){
 			printf("A quantidade de threads deve 1, 2, 5, 10 ou 20!\n");
 			return 0;
 		}
