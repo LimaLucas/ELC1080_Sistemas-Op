@@ -4,14 +4,14 @@
 #include <time.h>
 
 #define MAX 1000000
-#define MIN 0
+#define MIN 1
 
 // Variáveis globais para armazenar o valor buscado e número de threads
 int gX = 0;
 int gT = 0;
 
 // Função da Thread
-void * funcThread(void * index);
+void* funcThread(void* index);
 
 // Função que calcula a diferença entre tempo inicial e final
 double difTime(struct timespec t0, struct timespec t1);
@@ -19,7 +19,7 @@ double difTime(struct timespec t0, struct timespec t1);
 // Função que verifica se os parâmetros de entrada estão corretos
 int testInput(int argc, char **argv);
 
-int main(int argc, char **argv){
+int main(int argc, char** argv){
 	//INICIALIZAÇÃO
 	struct timespec t0, t1, t2, t3;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &t0);
@@ -28,15 +28,14 @@ int main(int argc, char **argv){
 		return -1;
 	int i;
 
-	printf("Valor buscado: \t%i\nQtde de threads: %i\n\n\tID\tEncontrou\n", gX, gT);
+	printf("Valor buscado: \t%i\nQtd de threads: %i\n\n\tID\tEncontrou\n", gX, gT);
 
 	// CRIAÇÃO DAS THREADS
 	clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
 	pthread_t lThread[gT]; // Cria lista de threads de tamanho gT informado por parâmetro
 
-	for(i=0; i<gT; i++){
-		pthread_create(&lThread[i], NULL, funcThread, (void *) i);
-	}
+	for(i=0; i<gT; i++)
+		pthread_create(&lThread[i], NULL, funcThread, (void*)i);
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &t2);
 
@@ -54,23 +53,18 @@ int main(int argc, char **argv){
 	return 0;
 }
 
-void * funcThread(void * index){
+void* funcThread(void* index){
 	int i;
-	int id = (int) index;
-	int ini = (MAX/gT)*id;  // Especifica o inicio do periodo a ser verificado
+	int id = (int)index;
+	int ini = (MAX/gT)*id+1;  // Especifica o inicio do periodo a ser verificado
 	int fin = ini+(MAX/gT); // Especifica o final do periodo
 
-	for(i=ini; i<fin; i++) // Percorre todo o periodo referente a uma thread
+	for(i=ini; i<=fin; i++) // Percorre todo o periodo referente a uma thread
 		if(gX==i){
 			printf("Thread\t%i \t1\n", id);
 			pthread_exit(NULL);
 		}
-
-	if(id==gT-1 && gX == MAX){ // Condição para que a última thread também verifique o valor MAX
-		printf("Thread\t%i \t0\n", id);
-		pthread_exit(NULL);
-	}
-
+		
 	printf("Thread\t%i \t0\n", id);
 	pthread_exit(NULL);
 }
