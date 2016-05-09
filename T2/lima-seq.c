@@ -30,7 +30,7 @@ int main(int argc, char** argv){
 	int i = funcao();
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
-	printf("Tempo de execução:\t\t%lf seg.\n", difTime(t0, t1));
+	printf("Tempo de execução:\t%lf seg.\n", difTime(t0, t1));
 
 	return 0;
 }
