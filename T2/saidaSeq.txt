@@ -1,0 +1,4 @@
+Valor buscado: 	654321
+Qtd de threads: 0
+Valor encontrado
+Tempo de execução:		0.003236 seg.
