@@ -2,13 +2,17 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <time.h>
+//#include <semaphore.h>
 
 #define PCS 3 	// Qtde de PCs disponívels
 #define MAX 15	// Qtde máxima de clientes em espera
 
+// Variável global para armazenar a qtde de clientes
+int gQtde = 0;
+
 // Lista FIFO de cliente na em espera na lanhouse
 typedef struct {
-	int x;
+	int num;
 	struct Cliente *next; 
 } Client;
 
@@ -17,6 +21,15 @@ typedef struct {
 	int value;
 	struct Client *list;
 }semaphore;
+
+// Função para criar fila de espera para clientes
+void* createFifo(struct Client *C);
+
+// Função para inserção de clientes na fila de espera
+void* insertClient(struct Client *C);
+
+// Funçaõ para remoção de clientes da fila de espera
+void* removeClient(struct Client *C);
 
 // Função executada quando um cliente quer usar um PC
 void* wait(semaphore *S);
@@ -40,17 +53,60 @@ int main(int argc, char** argv){
 	if(!testInput(argc, argv))
 		return -1;
 
+	int i;
+	pthread_t tPC[PCS]; 		// Cria lista de threads de PCS
+	pthread_t tClient[gQtde];	// Cria lista de threads de Clientes
 
+	for(i=0; i<PCS; i++)
+		pthread_create(&tPC[i], NULL, funcThread, (void*)i);
+
+	for(i=0; i<gQtde; i++)
+		pthread_create(&tPC[i], NULL, funcThread, (void*)i);
 
 	return 0;
 }
 
-void* wait(semaphore *S){
+void* createFifo(struct Client *C){
+	*C = NULL;
+}
 
+void* insertClient(struct Client *C){
+	if(C->num >= MAX)
+		return 0;
+
+	Client *newC;
+	newC = (Client*) malloc(sizeof(Client));
+	if(C == NULL)
+		newC->num = 0;
+	else
+		newC->num = C->num+1;
+	newc->next = C;
+	C = newcC;
+
+	return 1;
+}
+
+void* removeClient(struct Client *C){
+	Client *old;
+	old = C->next;
+	free(C);
+	C = old;
+}
+
+void* wait(semaphore *S){
+	S->value--;
+	if(S->value<0){
+		insertClient(S->list);
+		//block();
+	}
 }
 
 void* signal(semaphore *S){
-
+	S->value++;
+	if(S->value<=0){
+		removeClient(S->list);
+		//wakeup(P);
+	}
 }
 
 void* threadPC(void* index){
@@ -70,9 +126,9 @@ int testInput(int argc, char **argv){
 		printf("Informe a quantidade de clientes!\n");
 		return 0;
 	}else{
-		gX = atoi(argv[1]);
+		gQtde = atoi(argv[1]);
 		
-		if(argv[1]<1){ 
+		if(gQtde<1){ 
 			printf("Deve haver pelo menos 1 cliente!\n");
 			return 0;
 		}
