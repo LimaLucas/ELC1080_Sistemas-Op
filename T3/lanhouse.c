@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <time.h>
-//#include <semaphore.h>
+#include <semaphore.h>
 
 #define PCS 3 	// Qtde de PCs disponívels
 #define MAX 15	// Qtde máxima de clientes em espera
@@ -11,31 +11,16 @@
 int gQtde = 0;
 
 // Lista FIFO de cliente na em espera na lanhouse
-typedef struct {
-	int num;
-	struct Cliente *next; 
+typedef struct client{
+	int id;
+	pthread_t thread;
 } Client;
 
 // Estrutura do semáforo
-typedef struct {
-	int value;
-	struct Client *list;
-}semaphore;
-
-// Função para criar fila de espera para clientes
-void* createFifo(struct Client *C);
-
-// Função para inserção de clientes na fila de espera
-void* insertClient(struct Client *C);
-
-// Funçaõ para remoção de clientes da fila de espera
-void* removeClient(struct Client *C);
-
-// Função executada quando um cliente quer usar um PC
-void* wait(semaphore *S);
-
-// Fũnção executada quando um cliente deixa de usar um PC
-void* signal(semaphore *S);
+typedef struct pc{
+	int id;
+	pthread_t thread;
+} PC;
 
 // Thread para utilização de cada PC
 void* threadPC(void* index);
@@ -57,56 +42,19 @@ int main(int argc, char** argv){
 	pthread_t tPC[PCS]; 		// Cria lista de threads de PCS
 	pthread_t tClient[gQtde];	// Cria lista de threads de Clientes
 
+	// Criação das threads Clientes e thrads PCs
 	for(i=0; i<PCS; i++)
-		pthread_create(&tPC[i], NULL, funcThread, (void*)i);
-
+		pthread_create(&tPC[i].thread, NULL, threadPC, (void*)i);
 	for(i=0; i<gQtde; i++)
-		pthread_create(&tPC[i], NULL, funcThread, (void*)i);
+		pthread_create(&tClient[i].thread, NULL, threadClient, (void*)i);
+
+	// Junção das threads PCs e thrads Clientes
+	for(i=0; i<gQtde; i++)
+		pthread_join(tClient[i].thread, NULL);
+	for(i=0; i<PCS; i++)
+		pthread_join(tPC[i].thread, NULL);
 
 	return 0;
-}
-
-void* createFifo(struct Client *C){
-	*C = NULL;
-}
-
-void* insertClient(struct Client *C){
-	if(C->num >= MAX)
-		return 0;
-
-	Client *newC;
-	newC = (Client*) malloc(sizeof(Client));
-	if(C == NULL)
-		newC->num = 0;
-	else
-		newC->num = C->num+1;
-	newc->next = C;
-	C = newcC;
-
-	return 1;
-}
-
-void* removeClient(struct Client *C){
-	Client *old;
-	old = C->next;
-	free(C);
-	C = old;
-}
-
-void* wait(semaphore *S){
-	S->value--;
-	if(S->value<0){
-		insertClient(S->list);
-		//block();
-	}
-}
-
-void* signal(semaphore *S){
-	S->value++;
-	if(S->value<=0){
-		removeClient(S->list);
-		//wakeup(P);
-	}
 }
 
 void* threadPC(void* index){
@@ -126,7 +74,7 @@ int testInput(int argc, char **argv){
 		printf("Informe a quantidade de clientes!\n");
 		return 0;
 	}else{
-		gQtde = atoi(argv[1]);
+		sscanf(argv[1], "%i", &gQtde);
 		
 		if(gQtde<1){ 
 			printf("Deve haver pelo menos 1 cliente!\n");
