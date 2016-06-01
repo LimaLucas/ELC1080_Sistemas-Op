@@ -48,7 +48,7 @@ int main(int argc, char** argv){
 	gQtdeM = gQtde;
 	// sem_init(&mutex, 0, 1);
 
-	printf("\nLan House aberta!\n");
+	printf("\n----- Lan House aberta!\n");
 
 	// Criação das threads PCs e thrads Clientes
 	for(i=0; i<PCS; i++){
@@ -68,18 +68,24 @@ int main(int argc, char** argv){
 
 	// sem_destroy(&mutex);
 
+	printf("Todos os clientes foram embora.\n----- Lan House fechada!\n");
+
 	return 0;
 }
 
 void* threadPC(void* x){
 	int i = (int) x;
+	int q = 0;
 
 	gPCS[i]->id = i;
 	gPCS[i]->user = -1;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &gPCS[i]->time_off);
 	while(gQtde > 0){
-		if(gPCS[i]->user == -1)
+		// Verifica se há algum user no PC e se a quantidade de cliente diminuiu
+		if(gQtde != q && gPCS[i]->user == -1){
 			printf("\tPC\t%i\tdesligado.\n", gPCS[i]->id);
+			q = gQtde;
+		}
 	}
 	// sem_wait(&mutex);
 	// SC
@@ -90,24 +96,30 @@ void* threadClient(void* x){
 	Client* C = (Client*) x;
 	int freePC;
 
-	sleep(10*((rand()%4)+1));
-	printf("\tCliente\t%i\tchegou\n");
+	sleep(10*((rand()%4)+1)); // Sleep para chegada aleatória dos clientes
+	printf("\tCliente\t%i\tchegou\n", C->id);
+
+	if(false) // Verifica se a fila de espera está cheia
+		printf("\tCliente\t%i\tsaiu - Fila cheia\n", C->id);
 
 	// SC
 	if(freePC = idFreePC() != -1){
-		gPCS[freePC]->user = C->id;
-		sleep(80+rand()%9);
-		printf("\tCliente\t%i\tterminou de usar o PC e saiu\n");
+		gPCS[freePC]->user = C->id; // Guarda id do cliente utilizando o PC
+		printf("\tCliente\t%i\tusando PC\t%i\n", C->id, freePC);
+		sleep(80+rand()%9); // Sleep para controlar tempo de uso dos PCs
 	}
 	// sem_wait(&mutex);
 	// SC
 	// sem_post(&mutex);
+	printf("\tCliente\t%i\tterminou de usar o PC e saiu\n", C->id);
+	gQtde--;
 }
 
 int idFreePC(){
 	int i, id = -1;
 	struct timespec t = gPCS[0]->time_off;
 	for(i=0; i<PCS; i++){
+		// Verifica se há user no PC e se o tempo desligado é menor que o anterior
 		if(gPCS[0]->user < 0 && difTime(t, gPCS[i]->time_off) <= 0) {
 			t = gPCS[i]->time_off;
 			id = i;
