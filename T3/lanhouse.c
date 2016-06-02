@@ -7,37 +7,24 @@
 #define PCS 3 	// Qtde de PCs disponívels
 #define MAX 15	// Qtde máxima de clientes em espera
 
-typedef struct client{
-	int id;
-	pthread_t thread;
-} Client;
-
 typedef struct pc{
 	int id;
-	int user; // Corresponde ao id do cliente que está usando
-	struct timespec time_off;
-	pthread_t thread;
+	int user; // Id do cliente que está usando o PC no momento
+	time_t time_off; // Tempo em que o PC foi desligado e pode ser usado
 } PC;
 
-// Variável global para armazenar a qtde de clientes
-int gQtde = 0;
+int gQtde = 0; // Variável global para armazenar a qtde de clientes
+int gFila = 0; // Variável global para controlar a fila de espera
 PC* gPCS; // PCs disponíveis na lanhouse (SC)
-// sem_t mutex;
 
-// gPCS[0]->id = 0;
-// printf("Teste PC id = %i\n", gPCS[0]->id);
-
-// Thread para utilização de cada PC
-void* threadPC(void* x);
+sem_t mutex; // Semáforo para controle da sessão crítica do PC
+sem_t mutexFila; // Semáforo para controle da sessão crítica da fila
 
 // Thread para chegada de cada cliente
 void* threadClient(void* x);
 
 // Função que retorna o id do PC livre a + tempo, se não houver -1
-int idFreePC();
-
-// Função que calcula a diferença entre tempo inicial e final
-double difTime(struct timespec t0, struct timespec t1);
+int idOldPC();
 
 // Função que verifica se os parâmetros de entrada estão corretos
 int testInput(int argc, char **argv);
@@ -46,98 +33,102 @@ int main(int argc, char** argv){
 	if(!testInput(argc, argv))
 		return -1;
 
-	int i, qtde = gQtde;
+	// Para gerar um novo valor aleatório a cada execução
+	srand(time(NULL));
 
-	gPCS = (PC*) malloc(PCS*sizeof(PC*));
+	int i;
 
-	Client* tClient;
-	tClient = (Client*) malloc(qtde*sizeof(Client*));
-	
-	// sem_init(&mutex, 0, 1);
+	gPCS = (PC*) calloc(PCS, sizeof(PC));
+	pthread_t tClient[gQtde];
 
 	printf("\n----- Lan House aberta!\n");
-	// Criação das threads PCs e thrads Clientes
+
+	// Inicialização dos semáforos
+	sem_init(&mutex, 0, PCS);
+	sem_init(&mutexFila, 0, 1);
+
+	// Criação dos PCs
 	for(i=0; i<PCS; i++){
-		pthread_create(&gPCS[i].thread, NULL, threadPC, (void*)i);
+		gPCS[i].id = i;
+		gPCS[i].user = -1;
+		gPCS[i].time_off = time(NULL)%10;
+		sleep(1); // Sleep para cada PC tenha um tempo diferente
 	}
-	printf("> PCS criados\n");
-	sleep(1); // Sleep para que todos os PCS sejam criados antes dos clientes
-	for(i=0; i<qtde; i++){
-		tClient[i].id = i;
-		pthread_create(&tClient[i].thread, NULL, threadClient, (void*)&tClient[i]);
-	}
-	printf("> Clientes criados\n");
 
-	// Junção das threads Clientes e thrads PCs
-	for(i=0; i<qtde; i++)
-		pthread_join(tClient[i].thread, NULL);
-	printf("> Clientes terminados\n");
-
-	for(i=0; i<PCS; i++)
-		pthread_join(gPCS[i].thread, NULL);
-	printf("> PCS terminados\n");
-	// sem_destroy(&mutex);
+	// Criação das threads Clientes
+	for(i=0; i<gQtde; i++)
+		pthread_create(&tClient[i], NULL, threadClient, (void*)i);
+	
+	// Junção das threads Clientes
+	for(i=0; i<gQtde; i++)
+		pthread_join(tClient[i], NULL);
 
 	printf("Todos os clientes foram embora.\n----- Lan House fechada!\n");
+	
+	// Destruição dos semáforos
+	sem_destroy(&mutex);
+	sem_destroy(&mutexFila);
 
 	return 0;
 }
 
-void* threadPC(void* x){
-	int i = (int) x;
-	int q = 0;
-
-	gPCS[i].id = i;
-	gPCS[i].user = -1;
-
-	clock_gettime(CLOCK_MONOTONIC_RAW, &gPCS[i].time_off);
-	while(gQtde > 0){
-		// Verifica se há algum user no PC e se a quantidade de cliente diminuiu
-		if(gQtde != q && gPCS[i].user == -1){
-			printf("-\tPC\t%i\tdesligado.\n", gPCS[i].id);
-			q = gQtde;
-		}
-	}
-	// sem_wait(&mutex);
-	// SC
-	// sem_post(&mutex);
-}
-
 void* threadClient(void* x){
-	Client* C = (Client*) x;
-	int freePC;
-	sleep(10*((rand()%4)+1)); // Sleep para chegada aleatória dos clientes
-	printf("--\tCliente\t%i\tchegou\n", C->id);
-	if(0) // Verifica se a fila de espera está cheia
-		printf("--\tCliente\t%i\tsaiu - Fila cheia\n", C->id);
-	// SC
-	if(freePC = idFreePC() != -1){
-		gPCS[freePC].user = C->id; // Guarda id do cliente utilizando o PC
-		printf("--\tCliente\t%i\tusando PC\t%i\n", C->id, freePC);
-		sleep(80+rand()%9); // Sleep para controlar tempo de uso dos PCs
+	int oldPC, t, id = (int) x;
+
+	t = ((rand()%5)+1)*10;
+
+	usleep(10000*t); // Sleep para chegada aleatória dos clientes
+	
+	sem_wait(&mutexFila);
+	// Início da sessão crítica da fila
+	if(gFila >= MAX){ // Verifica se a fila de espera está cheia
+		printf(" - Cliente\t%i\tsaiu\t- Fila cheia\n", id);
+		sem_post(&mutexFila); // Libera SC da fila caso ela esteja cheia
+		pthread_exit(NULL);
+	}else
+		gFila++;
+	// Fim da sessão crítica da fila
+	sem_post(&mutexFila);
+	
+	printf(" - Cliente\t%i\tchegou\t- Tempo: %ims\n", id, t);
+
+	sem_wait(&mutex);
+	// Início da sessão crítica do PC
+	oldPC = idOldPC();
+	if(oldPC != -1){
+		gPCS[oldPC].user = id; // Guarda id do cliente utilizando o PC
+		gPCS[oldPC].time_off = time(NULL)%10; // Guarda tempo de início do uso
+		
+		t = (80+rand()%11); // Gera valor aleatóro entre 80 e 90 para tempo de uso
+
+		printf(" - Cliente\t%i\tusando PC\t%i\t- Por: %ims\n", id, oldPC, t);
+		usleep(t*1000); // Sleep para controlar tempo de uso dos PCs
+		printf(" - Cliente\t%i\tterminou de usar o PC e saiu\n", id);
+
+		gPCS[oldPC].user = -1; // Libera o uso do PC para outros usuários
+		gPCS[oldPC].time_off += t; // Soma ao temp inicial o tempo de uso
 	}
-	// sem_wait(&mutex);
-	// SC
-	// sem_post(&mutex);
-	printf("--\tCliente\t%i\tterminou de usar o PC e saiu\n", C->id);
-	gQtde--;
+	// Fim da sessão crítica do PC
+	sem_post(&mutex);
+
+	sem_wait(&mutexFila);
+	gFila--; // Sessão crítica da fila
+	sem_post(&mutexFila);
+
+	pthread_exit(NULL);
 }
 
-int idFreePC(){
+int idOldPC(){
 	int i, id = -1;
-	struct timespec t = gPCS[0].time_off;
+	time_t t = gPCS[0].time_off;
 	for(i=0; i<PCS; i++){
-		// Verifica se há user no PC e se o tempo desligado é menor que o anterior
-		if(gPCS[0].user < 0 && difTime(t, gPCS[i].time_off) <= 0) {
+		// Verifica se há user no PC e se o time_off é menor que os anteriores
+		if(gPCS[0].user < 0 && t >= gPCS[i].time_off) {
 			t = gPCS[i].time_off;
 			id = i;
 		}
 	}
 	return id;
-}
-
-double difTime(struct timespec t0, struct timespec t1){
-    return ((double)t1.tv_sec - t0.tv_sec) + ((double)(t1.tv_nsec-t0.tv_nsec) * 1e-9);
 }
 
 int testInput(int argc, char **argv){
