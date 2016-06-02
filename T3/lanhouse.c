@@ -56,8 +56,10 @@ int main(int argc, char** argv){
 	}
 
 	// Criação das threads Clientes
-	for(i=0; i<gQtde; i++)
+	for(i=0; i<gQtde; i++){
+		// usleep(10000*((rand()%5)+1)*10); // Sleep para chegada aleatória dos clientes
 		pthread_create(&tClient[i], NULL, threadClient, (void*)i);
+	}
 	
 	// Junção das threads Clientes
 	for(i=0; i<gQtde; i++)
@@ -74,11 +76,10 @@ int main(int argc, char** argv){
 
 void* threadClient(void* x){
 	int oldPC, t, id = (int) x;
-
-	t = ((rand()%5)+1)*10;
-
-	usleep(10000*t); // Sleep para chegada aleatória dos clientes
 	
+	usleep(10000*((rand()%5)+1)*10); // Sleep para chegada aleatória dos clientes	
+	printf(" - Cliente\t%i\tchegou\n", id);
+
 	sem_wait(&mutexFila);
 	// Início da sessão crítica da fila
 	if(gFila >= MAX){ // Verifica se a fila de espera está cheia
@@ -89,8 +90,6 @@ void* threadClient(void* x){
 		gFila++;
 	// Fim da sessão crítica da fila
 	sem_post(&mutexFila);
-	
-	printf(" - Cliente\t%i\tchegou\t- Tempo: %ims\n", id, t);
 
 	while(1){
 		sem_wait(&mutex);
