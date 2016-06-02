@@ -123,7 +123,7 @@ int idOldPC(){
 	time_t t = gPCS[0].time_off;
 	for(i=0; i<PCS; i++){
 		// Verifica se há user no PC e se o time_off é menor que os anteriores
-		if(gPCS[0].user == -1 && t >= gPCS[i].time_off) {
+		if(gPCS[i].user == -1 && t >= gPCS[i].time_off) {
 			t = gPCS[i].time_off;
 			id = i;
 		}
