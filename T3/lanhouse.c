@@ -92,24 +92,28 @@ void* threadClient(void* x){
 	
 	printf(" - Cliente\t%i\tchegou\t- Tempo: %ims\n", id, t);
 
-	sem_wait(&mutex);
-	// Início da sessão crítica do PC
-	oldPC = idOldPC();
-	if(oldPC != -1){
-		gPCS[oldPC].user = id; // Guarda id do cliente utilizando o PC
-		gPCS[oldPC].time_off = time(NULL)%10; // Guarda tempo de início do uso
-		
-		t = (80+rand()%11); // Gera valor aleatóro entre 80 e 90 para tempo de uso
+	while(1){
+		sem_wait(&mutex);
+		// Início da sessão crítica do PC
+		oldPC = idOldPC();
+		if(oldPC != -1){
+			gPCS[oldPC].user = id; // Guarda id do cliente utilizando o PC
+			gPCS[oldPC].time_off = time(NULL)%10; // Guarda tempo de início do uso
+			
+			t = (80+rand()%11); // Gera valor aleatóro entre 80 e 90 para tempo de uso
 
-		printf(" - Cliente\t%i\tusando PC\t%i\t- Por: %ims\n", id, oldPC, t);
-		usleep(t*1000); // Sleep para controlar tempo de uso dos PCs
-		printf(" - Cliente\t%i\tterminou de usar o PC e saiu\n", id);
+			printf(" - Cliente\t%i\tusando PC\t%i\t- Por: %ims\n", id, oldPC, t);
+			usleep(t*1000); // Sleep para controlar tempo de uso dos PCs
+			printf(" - Cliente\t%i\tterminou de usar o PC %i e saiu\n", id, oldPC);
 
-		gPCS[oldPC].user = -1; // Libera o uso do PC para outros usuários
-		gPCS[oldPC].time_off += t; // Soma ao temp inicial o tempo de uso
+			gPCS[oldPC].user = -1; // Libera o uso do PC para outros usuários
+			gPCS[oldPC].time_off += t; // Soma ao temp inicial o tempo de uso
+			
+			sem_post(&mutex);
+			break;
+		}
+		// Fim da sessão crítica do PC
 	}
-	// Fim da sessão crítica do PC
-	sem_post(&mutex);
 
 	sem_wait(&mutexFila);
 	gFila--; // Sessão crítica da fila
