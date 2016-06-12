@@ -4,6 +4,14 @@
 #include <time.h>
 #include <semaphore.h>
 
+#define N 5 // Tamanho do buffer
+
+int gBuffer[N]; // Variável global buffer de N posições (SC)
+// Semáforos
+sem_t full;  // Controla as posições ocupadas no Buffer - inicia com 0
+sem_t empty; // Controla as posições vazias no Buffer - inicia com N
+sem_t mutex; // Controla o acesso ao Buffer - inicia com 1
+
 // Função que verifica se os parâmetros de entrada estão corretos
 int testInput(int argc, char **argv);
 

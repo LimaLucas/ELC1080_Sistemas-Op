@@ -39,7 +39,7 @@ int main(int argc, char **argv){
 	
 	printf("\n> P1 = %i, meu pai é %i\n  Criando filho...\n", getpid(), getppid());
 
-	id= fork();
+	id = fork();
 	if(id == -1) return 1;
 	wait(&status);
 
