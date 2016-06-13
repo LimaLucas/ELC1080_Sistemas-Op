@@ -32,6 +32,7 @@ int main(int argc, char** argv){
 	if(!testInput(argc, argv))
 		return -1;
 
+	int i;
 	pthread_t tProducer;
 	pthread_t tConsumer;
 
@@ -39,6 +40,12 @@ int main(int argc, char** argv){
 	sem_init(&full, 0, 0);
 	sem_init(&empty, 0, N);
 	sem_init(&mutex, 0, 1);
+
+	return 0;
+
+	// Inicialização do buffer com 0
+	for(i=0; i<N; i++)
+		gBuffer[i] = 0;
 
 	printf("----- Iniciando produção de %i números para consumo.\n", Q);
 
@@ -61,55 +68,90 @@ int main(int argc, char** argv){
 }
 
 void* threadConsumer(){
+	int i, j, n;
 
-	sem_wait(&full);
-	sem_wait(&mutex); // Início da SC
+	for(i==0; i<Q; i++){
+		// Bloqueio do consumidor caso o buffer esteja vazio
+		sem_getvalue(&empty, &j);
+		if(j == 0)
+			sleep(1);
 
-	// SC
-	
-	sem_post(&mutex); // Fim da SC
-	sem_post(&empty);
+		n = 0;
 
+		sem_wait(&full);
+		sem_wait(&mutex); // Início da SC -------
+
+		for(n=0; n<N; n++) // Seleciona primeira posição ocupada no buffer
+			if(gBuffer[n] != 0)
+				break;
+
+		for(j=0; j<N; j++) // Seleciona a posição com menor número no buffer
+			if(gBuffer[n] > gBuffer[j] && gBuffer != 0)
+				n = j;
+
+		n = gBuffer[j]; // Salva item do buffer
+		gBuffer[j] = 0; // Remove item do buffer
+		
+		sem_post(&mutex); // Fim da SC ----------
+		sem_post(&empty);
+
+		if(testPrime(n)) // Consome item (verifica se é primo)
+			printf("\t - Número: %4i (primo)\n", n);
+		else
+			printf("\t - Número: %4i\n", n);
+	}
+	pthread_exit(NULL);
 }
 
 void* threadProducer(){
-	int i;
+	int i, j;
 	int n2 = 0;
 	int n1 = 1;
 
 	for(i==0; i<Q; i++){
-			sem_wait(&empty);
-			sem_wait(&mutex); // Início da SC
-			
-			// SC
+		// Bloqueio do Produtor caso o buffer esteja cheio
+		sem_getvalue(&full, &j);
+		if(j == N)
+			sleep(1);
 
-			sem_post(&mutex); // Fim da SC
-			sem_post(&full);
-			
-			n1 += n2;
-			n2 = n1 - n2;
+		sem_wait(&empty);
+		sem_wait(&mutex); // Início da SC -------
+
+		for(j=0; j<N; j++) // Seleciona primeira posição livre no buffer
+			if(gBuffer[j] == 0)
+				break;
+		
+		gBuffer[j] = n1; // Insere o item no buffer
+		printf("\t - Produzido o item %4i na posição %2i \n", n1, j);
+
+		sem_post(&mutex); // Fim da SC ----------
+		sem_post(&full);
+		
+		// Cálculo dos números da sequência Fibonacci fora da SC
+		n1 += n2;
+		n2 = n1 - n2;
 	}
 	
 	pthread_exit(NULL);
 }
 
-int testPrime(int X){
+int testPrime(int n){
 	int i, max;
 
 	// Elimina direto os números pares e o 1
-	if( (X!=2 && X%2==0) || X==1)
+	if( (n!=2 && n%2==0) || n==1)
 		return 0;
 	else{
 		// Reduz considerávelmente a qtde de números verificados
-		max = (int) (sqrtof(X));
-		// Verifica todos os possíveis divisores até a raiz quadrada de X
+		max = (int) (sqrtof(n));
+		// Verifica todos os possíveis divisores até a raiz quadrada de n
 		for(i=2; i<=max; i++)
 			// No primeiro divisor perfeito, retorna 0
-			if(X%i==0){
+			if(n%i==0){
 				return 0;
 			}
 	}
-	// Se não houver nenhum divisor perfeito (além de 1 e de X) retorna 1
+	// Se não houver nenhum divisor perfeito (além de 1 e de n) retorna 1
 	return 1;
 }
 
