@@ -55,7 +55,7 @@ int main(int argc, char** argv){
 	pthread_join(tProducer, NULL);
 	pthread_join(tConsumer, NULL);
 
-	printf("----- Todos os %i números produzidos e consumidos.\n", Q);
+	printf("----- Todos os %i números produzidos foram consumidos.\n", Q);
 
 	// Destruição dos semáforos
 	sem_destroy(&full);
@@ -68,10 +68,10 @@ int main(int argc, char** argv){
 void* threadConsumer(){
 	int i, j, n;
 
-	for(i==0; i<Q; i++){
+	for(i=0; i<Q; i++){
 		// Bloqueio do consumidor caso o buffer esteja vazio
 		sem_getvalue(&empty, &j);
-		if(j == 0)
+		if(j == 1)
 			sleep(1);
 
 		n = 0;
@@ -84,8 +84,10 @@ void* threadConsumer(){
 				break;
 
 		for(j=0; j<N; j++) // Seleciona a posição com menor número no buffer
-			if(gBuffer[n] > gBuffer[j] && gBuffer != 0)
+			if(gBuffer[n] > gBuffer[j] && gBuffer[j] != 0)
 				n = j;
+
+		j = n;
 
 		n = gBuffer[j]; // Salva item do buffer
 		gBuffer[j] = 0; // Remove item do buffer
@@ -94,9 +96,9 @@ void* threadConsumer(){
 		sem_post(&empty);
 
 		if(testPrime(n)) // Consome item (verifica se é primo)
-			printf("\t - Número: %4i (primo)\n", n);
+			printf("\t\t- Número:%4i (primo)\n", n);
 		else
-			printf("\t - Número: %4i\n", n);
+			printf("\t\t- Número:%4i\n", n);
 	}
 	pthread_exit(NULL);
 }
@@ -106,7 +108,7 @@ void* threadProducer(){
 	int n2 = 0;
 	int n1 = 1;
 
-	for(i==0; i<Q; i++){
+	for(i=0; i<Q; i++){
 		// Bloqueio do Produtor caso o buffer esteja cheio
 		sem_getvalue(&full, &j);
 		if(j == N)
@@ -120,7 +122,7 @@ void* threadProducer(){
 				break;
 		
 		gBuffer[j] = n1; // Insere o item no buffer
-		printf("\t - Produzido o item %4i na posição %2i \n", n1, j);
+		printf("\t- Produzido o item %5i na posição %2i \n", n1, j);
 
 		sem_post(&mutex); // Fim da SC ----------
 		sem_post(&full);
@@ -129,7 +131,6 @@ void* threadProducer(){
 		n1 += n2;
 		n2 = n1 - n2;
 	}
-	
 	pthread_exit(NULL);
 }
 
