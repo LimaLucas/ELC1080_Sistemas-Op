@@ -41,8 +41,6 @@ int main(int argc, char** argv){
 	sem_init(&empty, 0, N);
 	sem_init(&mutex, 0, 1);
 
-	return 0;
-
 	// Inicialização do buffer com 0
 	for(i=0; i<N; i++)
 		gBuffer[i] = 0;
