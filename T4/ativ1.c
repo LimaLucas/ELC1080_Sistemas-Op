@@ -6,7 +6,7 @@
 #define N 5  // Tamanho do buffer
 #define Q 25 // Qtde de números da seq Fibonacci
 
-int gBuffer[N]; // Variável global buffer de N posições (SC)
+int gBuffer[N]; // Variável buffer de N posições (SC)
 // Declaração dos semáforos
 sem_t full;  // Controla as posições ocupadas no Buffer - inicia com 0
 sem_t empty; // Controla as posições vazias no Buffer - inicia com N
@@ -69,36 +69,27 @@ void* threadConsumer(){
 	int i, j, n;
 
 	for(i=0; i<Q; i++){
-		// Bloqueio do consumidor caso o buffer esteja vazio
-		sem_getvalue(&empty, &j);
-		if(j == 1)
-			sleep(1);
-
 		n = 0;
 
 		sem_wait(&full);
 		sem_wait(&mutex); // Início da SC -------
 
-		for(n=0; n<N; n++) // Seleciona primeira posição ocupada no buffer
-			if(gBuffer[n] != 0)
-				break;
-
 		for(j=0; j<N; j++) // Seleciona a posição com menor número no buffer
-			if(gBuffer[n] > gBuffer[j] && gBuffer[j] != 0)
+			if((gBuffer[n] > gBuffer[j] && gBuffer[j] != 0) || gBuffer[n] == 0)
 				n = j;
-
 		j = n;
 
 		n = gBuffer[j]; // Salva item do buffer
 		gBuffer[j] = 0; // Remove item do buffer
+		printf("\t\t- Removido item %5i \n", n);
 		
 		sem_post(&mutex); // Fim da SC ----------
 		sem_post(&empty);
 
 		if(testPrime(n)) // Consome item (verifica se é primo)
-			printf("\t\t- Número:%4i (primo)\n", n);
+			printf("\t\t- Consumido item %5i (primo)\n", n);
 		else
-			printf("\t\t- Número:%4i\n", n);
+			printf("\t\t- Consumido item %5i \n", n);
 	}
 	pthread_exit(NULL);
 }
@@ -110,9 +101,9 @@ void* threadProducer(){
 
 	for(i=0; i<Q; i++){
 		// Bloqueio do Produtor caso o buffer esteja cheio
-		sem_getvalue(&full, &j);
-		if(j == N)
-			sleep(1);
+		// sem_getvalue(&full, &j);
+		// if(j == N)
+		// 	sleep(1);
 
 		sem_wait(&empty);
 		sem_wait(&mutex); // Início da SC -------

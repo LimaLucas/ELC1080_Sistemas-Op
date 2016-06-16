@@ -6,8 +6,9 @@
 #define N 5  // Tamanho do buffer
 #define Q 25 // Qtde de números da seq Fibonacci
 
-int gBuffer[N]; // Variável global buffer de N posições (SC)
-int gQtde = 0; // Variável global para armazenar a qtde de Consumidores
+int gBuffer[N]; // Variável buffer de N posições (SC)
+int gQtde = 0; // Variável para armazenar a qtde de Consumidores
+int gItens = 0; // Variável para controlar a quantidade de itens 
 // Declaração dos semáforos
 sem_t full;  // Controla as posições ocupadas no Buffer - inicia com 0
 sem_t empty; // Controla as posições vazias no Buffer - inicia com N
@@ -35,7 +36,7 @@ int main(int argc, char** argv){
 
 	int i;
 	pthread_t tProducer;
-	pthread_t tConsumer;
+	pthread_t tConsumer[gQtde];
 
 	// Inicialização dos semáforos
 	sem_init(&full, 0, 0);
@@ -46,62 +47,60 @@ int main(int argc, char** argv){
 	for(i=0; i<N; i++)
 		gBuffer[i] = 0;
 
-	printf("----- Iniciando produção de %i números para consumo.\n", Q);
+	printf("----- Iniciando produção de %i números e %i consumidores.\n", Q, gQtde);
 
 	// Criação das Threads - Produtoras e Consumidoras
 	pthread_create(&tProducer, NULL, threadProducer, NULL);
-	pthread_create(&tConsumer, NULL, threadConsumer, NULL);
+	
+	for(i=0; i<gQtde; i++)
+		pthread_create(&tConsumer[i], NULL, threadConsumer, NULL);
 
-	// Junção das Threads - Produtoras e Consumidoras
+	// Retirados os joins pois está sendo utilizado o pthread_exit e exit
 	pthread_join(tProducer, NULL);
-	pthread_join(tConsumer, NULL);
+	for(i=0; i<gQtde; i++)
+		pthread_join(tConsumer[i], NULL);
 
-	printf("----- Todos os %i números produzidos foram consumidos.\n", Q);
-
-	// Destruição dos semáforos
-	sem_destroy(&full);
-	sem_destroy(&empty);
-	sem_destroy(&mutex);
+	// sem_destroy(&full);
+	// sem_destroy(&empty);
+	// sem_destroy(&mutex);
 
 	return 0;
 }
 
 void* threadConsumer(){
-	int i, j, n;
+	int i, n, flag;
 
-	for(i=0; i<Q; i++){
-		// Bloqueio do consumidor caso o buffer esteja vazio
-		sem_getvalue(&empty, &j);
-		if(j == 1)
-			sleep(1);
-
+	while(flag < Q){
 		n = 0;
 
 		sem_wait(&full);
 		sem_wait(&mutex); // Início da SC -------
 
-		for(n=0; n<N; n++) // Seleciona primeira posição ocupada no buffer
-			if(gBuffer[n] != 0)
-				break;
+		for(i=0; i<N; i++) // Seleciona a posição com menor número no buffer
+			if((gBuffer[n] > gBuffer[i] && gBuffer[i] != 0) || gBuffer[n] == 0)
+				n = i;
+		i = n;
 
-		for(j=0; j<N; j++) // Seleciona a posição com menor número no buffer
-			if(gBuffer[n] > gBuffer[j] && gBuffer[j] != 0)
-				n = j;
-
-		j = n;
-
-		n = gBuffer[j]; // Salva item do buffer
-		gBuffer[j] = 0; // Remove item do buffer
+		n = gBuffer[i]; // Salva item do buffer
+		gBuffer[i] = 0; // Remove item do buffer
+		gItens++; // Incrementa a quantidade de itens consumidos
+		flag = gItens;
+		printf("\t\t- Removido item %5i \n", n);
 		
 		sem_post(&mutex); // Fim da SC ----------
 		sem_post(&empty);
 
 		if(testPrime(n)) // Consome item (verifica se é primo)
-			printf("\t\t- Número:%4i (primo)\n", n);
+			printf("\t\t- Consumido item %5i (primo)\n", n);
 		else
-			printf("\t\t- Número:%4i\n", n);
+			printf("\t\t- Consumido item %5i \n", n);
 	}
-	pthread_exit(NULL);
+
+	sem_destroy(&full);
+	sem_destroy(&empty);
+	sem_destroy(&mutex);
+	printf("----- Todos os %i números produzidos foram consumidos.\n", Q);
+	exit(0); // Encerra o programa, pois os consumidores ficam presos no semaforo
 }
 
 void* threadProducer(){
