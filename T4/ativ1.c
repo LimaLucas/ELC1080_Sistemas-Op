@@ -100,10 +100,6 @@ void* threadProducer(){
 	int n1 = 1;
 
 	for(i=0; i<Q; i++){
-		// Bloqueio do Produtor caso o buffer esteja cheio
-		// sem_getvalue(&full, &j);
-		// if(j == N)
-		// 	sleep(1);
 
 		sem_wait(&empty);
 		sem_wait(&mutex); // Início da SC -------

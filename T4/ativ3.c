@@ -36,7 +36,7 @@ int main(int argc, char** argv){
 
 	int i;
 	pthread_t tProducer;
-	pthread_t tConsumer[gQtde];
+	pthread_t tConsumer[gQtde]; // Lista de threads com tamanho variável
 
 	// Inicialização dos semáforos
 	sem_init(&full, 0, 0);
@@ -52,7 +52,7 @@ int main(int argc, char** argv){
 	// Criação das Threads - Produtoras e Consumidoras
 	pthread_create(&tProducer, NULL, threadProducer, NULL);
 	
-	for(i=0; i<gQtde; i++)
+	for(i=0; i<gQtde; i++) // Criação de todas as threads consumidoras
 		pthread_create(&tConsumer[i], NULL, threadConsumer, NULL);
 
 	// Retirados os joins pois está sendo utilizado o pthread_exit e exit
@@ -84,7 +84,7 @@ void* threadConsumer(){
 		n = gBuffer[i]; // Salva item do buffer
 		gBuffer[i] = 0; // Remove item do buffer
 		gItens++; // Incrementa a quantidade de itens consumidos
-		flag = gItens;
+		flag = gItens; // Flag verificadora para usar fora da SC
 		printf("\t\t- Removido item %5i \n", n);
 		
 		sem_post(&mutex); // Fim da SC ----------
@@ -95,7 +95,7 @@ void* threadConsumer(){
 		else
 			printf("\t\t- Consumido item %5i \n", n);
 	}
-
+	// Quando o último item é consumido, os semaforos são destruídos
 	sem_destroy(&full);
 	sem_destroy(&empty);
 	sem_destroy(&mutex);
@@ -104,32 +104,36 @@ void* threadConsumer(){
 }
 
 void* threadProducer(){
-	int i, j;
+	int i, j, k;
 	int n2 = 0;
 	int n1 = 1;
 
-	for(i=0; i<Q; i++){
-		// Bloqueio do Produtor caso o buffer esteja cheio
-		sem_getvalue(&full, &j);
-		if(j == N)
-			sleep(1);
+	for(i=0; i<Q; i+=N){
+		// Verifica se o buffer está vazio, caso contrário, desiste do processador
+		sem_getvalue(&empty, &k);
+		while(k != N){
+			pthread_yield();
+			sem_getvalue(&empty, &k);
+		}
 
-		sem_wait(&empty);
 		sem_wait(&mutex); // Início da SC -------
+		for(k=0; k<N; k++){
+			sem_wait(&empty);
+			
+			for(j=0; j<N; j++) // Seleciona primeira posição livre no buffer
+				if(gBuffer[j] == 0)
+					break;
+			
+			gBuffer[j] = n1; // Insere o item no buffer
+			printf("\t- Produzido o item %5i na posição %2i \n", n1, j);
 
-		for(j=0; j<N; j++) // Seleciona primeira posição livre no buffer
-			if(gBuffer[j] == 0)
-				break;
-		
-		gBuffer[j] = n1; // Insere o item no buffer
-		printf("\t- Produzido o item %5i na posição %2i \n", n1, j);
+			sem_post(&full);
 
+			// Cálculo dos números da sequência Fibonacci
+			n1 += n2;
+			n2 = n1 - n2;
+		}
 		sem_post(&mutex); // Fim da SC ----------
-		sem_post(&full);
-		
-		// Cálculo dos números da sequência Fibonacci fora da SC
-		n1 += n2;
-		n2 = n1 - n2;
 	}
 	pthread_exit(NULL);
 }
